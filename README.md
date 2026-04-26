@@ -91,7 +91,7 @@ Bundle Size: 200KB (single file)
 ✅ Delete → Confirms + removes
 ✅ Refresh → All data persists
 
-
+© 2026 Chandana Rajesh | Built during Future Interns Internship
 
 
 
