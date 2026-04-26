@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ventrix CRM Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    ::-webkit-scrollbar { @apply w-2 h-2; }
+    ::-webkit-scrollbar-track { @apply bg-white/5 rounded-full; }
+    ::-webkit-scrollbar-thumb { @apply bg-white/30 rounded-full hover:bg-white/50; }
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+    .float { animation: float 3s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-900 to-emerald-900 min-h-screen">
+  <!-- Login Page -->
+  <div id="loginPage" class="min-h-screen flex items-center justify-center p-8">
+    <div class="max-w-md w-full space-y-8">
+      <div class="text-center">
+        <div class="w-32 h-32 bg-gradient-to-br from-white to-emerald-400 rounded-4xl flex items-center justify-center mx-auto mb-8 shadow-2xl float">
+          <div class="text-5xl font-black bg-gradient-to-r from-slate-400 to-emerald-500 bg-clip-text text-transparent">
+            V
+          </div>
+        </div>
+        <h1 class="text-5xl font-black bg-gradient-to-r from-white to-emerald-300 bg-clip-text text-transparent mb-4 drop-shadow-2xl">
+          Ventrix CRM
+        </h1>
+        <p class="text-xl text-white/70 mb-4 font-semibold tracking-wide">Your Ultimate Sales Acceleration Platform</p>
+        <p class="text-xl text-white/70">Welcome back! Please sign in to your account</p>
+      </div>
+
+      <div class="bg-white/10 backdrop-blur-xl rounded-4xl p-10 border border-white/20 shadow-2xl">
+        <form id="loginForm" class="space-y-6">
+          <div>
+            <label class="block text-white font-bold text-xl mb-4">Email</label>
+            <input type="email" id="loginEmail" required
+                   class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all"
+                   placeholder="your.email@company.com">
+          </div>
+          
+          <div>
+            <label class="block text-white font-bold text-xl mb-4">Password</label>
+            <div class="relative">
+              <input type="password" id="loginPassword" required
+                     class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all pr-12"
+                     placeholder="••••••••">
+              <button type="button" id="togglePassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-all">
+                👁️
+              </button>
+            </div>
+          </div>
+
+          <div id="loginError" class="hidden bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded-3xl backdrop-blur-sm text-center font-bold"></div>
+
+          <button type="submit" id="loginBtn"
+                  class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-12 py-6 rounded-4xl font-black text-2xl shadow-2xl hover:shadow-3xl transition-all">
+            🚀 Sign In
+          </button>
+        </form>
+
+        <div class="mt-8 text-center">
+          <p class="text-white/60 text-lg">Demo Login:</p>
+          <p class="text-white/80 font-bold text-xl mt-2 bg-white/10 p-3 rounded-3xl backdrop-blur-sm">admin@ventrix.com • password</p>
+        </div>
+      </div>
+
+      <div class="text-center text-white/50 text-lg">
+        © 2024 Ventrix CRM. All rights reserved.
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Page (Hidden Initially) -->
+  <div id="dashboardPage" class="min-h-screen p-8 hidden">
+    <!-- Logout -->
+    <button onclick="logout()" class="fixed top-6 right-6 bg-white/20 backdrop-blur-xl text-white px-6 py-3 rounded-3xl font-bold hover:bg-white/30 transition-all z-50 shadow-2xl">
+      🚪 Logout
+    </button>
+
+    <!-- Loading State -->
+    <div id="loading" class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-40 hidden">
+      <div class="bg-white/10 backdrop-blur-xl p-12 rounded-4xl border border-white/20 text-white text-center">
+        <div class="w-20 h-20 border-4 border-white/20 border-t-white/80 rounded-full animate-spin mx-auto mb-6"></div>
+        <div class="text-2xl font-black">Loading...</div>
+      </div>
+    </div>
+
+    <div id="app" class="max-w-7xl mx-auto"></div>
+  </div>
+
+  <script>
+    class VentrixDashboard {
+      constructor() {
+        this.leads = JSON.parse(localStorage.getItem('ventrix-leads')) || [
+          // 30 REALISTIC DUMMY LEADS
+          {id:1, name:'Sarah Johnson', email:'sarah@techflow.io', company:'TechFlow Solutions', value:85000, status:'New', source:'Website', notes:[], createdAt: new Date(Date.now() - 86400000*2).toISOString()},
+          {id:2, name:'Michael Chen', email:'mike@innovatecorp.com', company:'Innovate Corp', value:125000, status:'Contacted', source:'LinkedIn', notes:[{text:'Sent proposal - follow up next week', createdAt: new Date(Date.now() - 86400000).toISOString()}], createdAt: new Date(Date.now() - 86400000*5).toISOString()},
+          {id:3, name:'Emily Rodriguez', email:'emily@healthplus.com', company:'HealthPlus Medical', value:45000, status:'Qualified', source:'Referral', notes:[{text:'Demo scheduled for Thursday', createdAt: new Date().toISOString()}], createdAt: new Date(Date.now() - 86400000*3).toISOString()},
+          {id:4, name:'David Wilson', email:'david@fintech.io', company:'FinTech Innovations', value:220000, status:'Proposal', source:'Event', notes:[{text:'Waiting on budget approval', createdAt: new Date(Date.now() - 86400000*7).toISOString()}], createdAt: new Date(Date.now() - 86400000*10).toISOString()},
+          {id:5, name:'Lisa Thompson', email:'lisa@greenenergy.co', company:'Green Energy Solutions', value:95000, status:'Closed', source:'Cold Email', notes:[{text:'Contract signed! $95K deal closed', createdAt: new Date(Date.now() - 86400000*12).toISOString()}], createdAt: new Date(Date.now() - 86400000*15).toISOString()},
+          {id:6, name:'Robert Davis', email:'rob@logisticspro.com', company:'Logistics Pro', value:68000, status:'New', source:'Website', notes:[], createdAt: new Date(Date.now() - 86400000).toISOString()},
+          {id:7, name:'Jessica Lee', email:'jess@marketingsync.com', company:'Marketing Sync', value:42000, status:'Contacted', source:'Referral', notes:[{text:'Expressed strong interest', createdAt: new Date(Date.now() - 86400000*2).toISOString()}], createdAt: new Date(Date.now() - 86400000*4).toISOString()},
+          {id:8, name:'James Parker', email:'james@cybersecure.net', company:'CyberSecure Systems', value:175000, status:'Qualified', source:'LinkedIn', notes:[], createdAt: new Date(Date.now() - 86400000*6).toISOString()},
+          {id:9, name:'Amanda Brown', email:'amanda@retailmax.com', company:'RetailMax Solutions', value:32000, status:'New', source:'Website', notes:[], createdAt: new Date(Date.now() - 86400000*1).toISOString()},
+          {id:10, name:'Christopher White', email:'chris@cloudworks.io', company:'CloudWorks', value:198000, status:'Proposal', source:'Event', notes:[{text:'Technical evaluation in progress', createdAt: new Date(Date.now() - 86400000*8).toISOString()}], createdAt: new Date(Date.now() - 86400000*9).toISOString()},
+          {id:11, name:'Rachel Green', email:'rachel@edu-tech.com', company:'EduTech Academy', value:58000, status:'Contacted', source:'Cold Email', notes:[], createdAt: new Date(Date.now() - 86400000*3).toISOString()},
+          {id:12, name:'Thomas Miller', email:'tom@manufacturinghub.com', company:'Manufacturing Hub', value:112000, status:'Closed', source:'Referral', notes:[{text:'Won $112K enterprise deal', createdAt: new Date(Date.now() - 86400000*14).toISOString()}], createdAt: new Date(Date.now() - 86400000*16).toISOString()},
+          {id:13, name:'Megan Taylor', email:'megan@designstudio.co', company:'Creative Design Studio', value:28000, status:'New', source:'Website', notes:[], createdAt: new Date().toISOString()},
+          {id:14, name:'Kevin Martinez', email:'kevin@supplychain.io', company:'SupplyChain Pro', value:89000, status:'Qualified', source:'LinkedIn', notes:[{text:'Budget approved, moving to proposal', createdAt: new Date(Date.now() - 86400000*4).toISOString()}], createdAt: new Date(Date.now() - 86400000*11).toISOString()},
+          {id:15, name:'Ashley Anderson', email:'ashley@healthtech.com', company:'HealthTech Innovations', value:156000, status:'Proposal', source:'Event', notes:[], createdAt: new Date(Date.now() - 86400000*7).toISOString()},
+          {id:16, name:'Daniel Garcia', email:'dan@ecommercepro.com', company:'Ecommerce Pro', value:67000, status:'Contacted', source:'Cold Email', notes:[{text:'Follow up call scheduled', createdAt: new Date(Date.now() - 86400000*2).toISOString()}], createdAt: new Date(Date.now() - 86400000*5).toISOString()},
+          {id:17, name:'Stephanie Clark', email:'steph@financesmart.io', company:'FinanceSmart', value:34000, status:'New', source:'Website', notes:[], createdAt: new Date(Date.now() - 86400000*1).toISOString()},
+          {id:18, name:'Brian Lewis', email:'brian@securityfirst.com', company:'Security First', value:245000, status:'Closed', source:'Referral', notes:[{text:'Largest deal closed - $245K', createdAt: new Date(Date.now() - 86400000*13).toISOString()}], createdAt: new Date(Date.now() - 86400000*18).toISOString()},
+          {id:19, name:'Nicole Hall', email:'nicole@traveltech.co', company:'TravelTech Solutions', value:52000, status:'Qualified', source:'LinkedIn', notes:[], createdAt: new Date(Date.now() - 86400000*6).toISOString()},
+          {id:20, name:'Matthew Allen', email:'matt@agritech.com', company:'AgriTech Systems', value:78000, status:'New', source:'Event', notes:[], createdAt: new Date(Date.now() - 86400000*3).toISOString()},
+          {id:21, name:'Lauren Young', email:'lauren@fitnesspro.io', company:'Fitness Pro', value:41000, status:'Contacted', source:'Website', notes:[{text:'Very interested in features', createdAt: new Date().toISOString()}], createdAt: new Date(Date.now() - 86400000*2).toISOString()},
+          {id:22, name:'Ryan King', email:'ryan@constructionhub.com', company:'Construction Hub', value:134000, status:'Proposal', source:'Cold Email', notes:[], createdAt: new Date(Date.now() - 86400000*8).toISOString()},
+          {id:23, name:'Hannah Wright', email:'hanna@legaltech.com', company:'LegalTech Solutions', value:92000, status:'Qualified', source:'Referral', notes:[{text:'Legal review completed', createdAt: new Date(Date.now() - 86400000*5).toISOString()}], createdAt: new Date(Date.now() - 86400000*10).toISOString()},
+          {id:24, name:'Jonathan Scott', email:'jon@realestatepro.io', company:'RealEstate Pro', value:65000, status:'New', source:'Website', notes:[], createdAt: new Date(Date.now() - 86400000*1).toISOString()},
+          {id:25, name:'Victoria Adams', email:'victoria@mediasync.com', company:'MediaSync', value:298000, status:'Proposal', source:'LinkedIn', notes:[{text:'High priority - enterprise deal', createdAt: new Date(Date.now() - 86400000*9).toISOString()}], createdAt: new Date(Date.now() - 86400000*12).toISOString()},
+          {id:26, name:'Gregory Baker', email:'greg@transportation.com', company:'Transportation Solutions', value:76000, status:'Contacted', source:'Event', notes:[], createdAt: new Date(Date.now() - 86400000*4).toISOString()},
+          {id:27, name:'Samantha Nelson', email:'samantha@hrtech.io', company:'HR Tech Innovations', value:54000, status:'Closed', source:'Cold Email', notes:[{text:'$54K deal closed successfully', createdAt: new Date(Date.now() - 86400000*15).toISOString()}], createdAt: new Date(Date.now() - 86400000*17).toISOString()},
+          {id:28, name:'Alexander Carter', email:'alex@blockchainpro.com', company:'Blockchain Pro', value:189000, status:'Qualified', source:'Referral', notes:[], createdAt: new Date(Date.now() - 86400000*7).toISOString()},
+          {id:29, name:'Rebecca Mitchell', email:'rebecca@insurtech.com', company:'InsurTech Solutions', value:37000, status:'New', source:'Website', notes:[], createdAt: new Date().toISOString()},
+          {id:30, name:'Patrick Turner', email:'patrick@automotive.io', company:'Automotive Tech', value:102000, status:'Contacted', source:'LinkedIn', notes:[{text:'Demo requested for next week', createdAt: new Date(Date.now() - 86400000*3).toISOString()}], createdAt: new Date(Date.now() - 86400000*6).toISOString()}
+        ];
+        this.search = '';
+        this.sortBy = 'value';
+        this.sortDir = 'desc';
+        this.isLoggedIn = localStorage.getItem('ventrix-logged-in') === 'true';
+        this.init();
+      }
+      
+      init() {
+        // Login form setup
+        const loginForm = document.getElementById('loginForm');
+        loginForm.onsubmit = (e) => this.handleLogin(e);
+        
+        // Password toggle
+        document.getElementById('togglePassword').onclick = () => {
+          const password = document.getElementById('loginPassword');
+          const toggle = document.getElementById('togglePassword');
+          if (password.type === 'password') {
+            password.type = 'text';
+            toggle.textContent = '🙈';
+          } else {
+            password.type = 'password';
+            toggle.textContent = '👁️';
+          }
+        };
+
+        if (this.isLoggedIn) {
+          this.showDashboard();
+        } else {
+          this.showLogin();
+        }
+        this.save();
+      }
+
+      save() {
+        localStorage.setItem('ventrix-leads', JSON.stringify(this.leads));
+      }
+
+      showLogin() {
+        document.getElementById('loginPage').classList.remove('hidden');
+        document.getElementById('dashboardPage').classList.add('hidden');
+      }
+
+      showDashboard() {
+        document.getElementById('loginPage').classList.add('hidden');
+        document.getElementById('dashboardPage').classList.remove('hidden');
+        this.render();
+      }
+
+      handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const loginBtn = document.getElementById('loginBtn');
+        const errorEl = document.getElementById('loginError');
+
+        // Show loading
+        loginBtn.innerHTML = '⏳ Signing In...';
+        loginBtn.disabled = true;
+        errorEl.classList.add('hidden');
+
+        setTimeout(() => {
+          // Demo login check
+          if (email === 'admin@ventrix.com' && password === 'password') {
+            localStorage.setItem('ventrix-logged-in', 'true');
+            this.isLoggedIn = true;
+            this.showDashboard();
+          } else {
+            errorEl.textContent = '❌ Invalid email or password';
+            errorEl.classList.remove('hidden');
+            loginBtn.innerHTML = '🚀 Sign In';
+            loginBtn.disabled = false;
+          }
+        }, 1500);
+      }
+
+      showLoading(show) {
+        document.getElementById('loading').classList.toggle('hidden', !show);
+      }
+      
+      sortLeads(a, b) {
+        let valA = a[this.sortBy];
+        let valB = b[this.sortBy];
+        
+                if (this.sortBy === 'value') {
+          valA = parseFloat(valA);
+          valB = parseFloat(valB);
+        } else if (['name', 'company', 'source'].includes(this.sortBy)) {
+          valA = valA.toLowerCase();
+          valB = valB.toLowerCase();
+        }
+        
+        if (valA < valB) return this.sortDir === 'desc' ? 1 : -1;
+        if (valA > valB) return this.sortDir === 'desc' ? -1 : 1;
+        return 0;
+      }
+
+      render() {
+        const filtered = this.leads
+          .filter(l => 
+            l.name.toLowerCase().includes(this.search.toLowerCase()) ||
+            l.company.toLowerCase().includes(this.search.toLowerCase()) ||
+            l.email.toLowerCase().includes(this.search.toLowerCase()) ||
+            l.source.toLowerCase().includes(this.search.toLowerCase())
+          )
+          .sort((a, b) => this.sortLeads(a, b));
+          
+        const totalValue = filtered.reduce((s, l) => s + (parseFloat(l.value) || 0), 0);
+        const avgValue = filtered.length ? Math.round(totalValue / filtered.length) : 0;
+        const leadsWithNotes = filtered.filter(l => l.notes && l.notes.length > 0).length;
+        const closedLeads = filtered.filter(l => l.status === 'Closed').length;
+        const closeRate = filtered.length ? Math.round((closedLeads / filtered.length) * 100) : 0;
+        
+        document.getElementById('app').innerHTML = `
+          <div class="text-center mb-16">
+            <h1 class="text-7xl font-black bg-gradient-to-r from-white to-emerald-300 bg-clip-text text-transparent mb-6 drop-shadow-2xl">
+              Ventrix Dashboard
+            </h1>
+            <p class="text-xl text-white/70 mb-4 font-semibold tracking-wide">Your Ultimate Sales Acceleration Platform</p>
+            <div class="space-y-1">
+              <p class="text-2xl text-white/90">
+                ${filtered.length} leads • $${(totalValue / 1000000).toFixed(1)}M pipeline
+              </p>
+              <p class="text-xl text-white/70">Avg: $${avgValue.toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
+            <div class="bg-white/10 backdrop-blur-xl p-10 rounded-4xl border border-white/20 text-white hover:bg-white/20 transition-all group">
+              <div class="text-5xl font-black mb-4 group-hover:scale-110 transition-transform">${filtered.length}</div>
+              <p class="text-xl opacity-80">Total Leads</p>
+            </div>
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-500 p-10 rounded-4xl text-white hover:shadow-2xl transition-all shadow-xl">
+              <div class="text-5xl font-black mb-4">$${(totalValue / 1000000).toFixed(1)}M</div>
+              <p class="text-xl">Pipeline Value</p>
+            </div>
+            <div class="bg-gradient-to-r from-slate-500 to-indigo-500 p-10 rounded-4xl text-white hover:shadow-2xl transition-all shadow-xl">
+              <div class="text-5xl font-black mb-4">${filtered.filter(l=>l.status==='New').length}</div>
+              <p class="text-xl">New Leads</p>
+            </div>
+            <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-10 rounded-4xl text-white hover:shadow-2xl transition-all shadow-xl">
+              <div class="text-5xl font-black mb-4">${leadsWithNotes}</div>
+              <p class="text-xl">Leads w/ Notes</p>
+            </div>
+            <div class="bg-gradient-to-r from-orange-500 to-red-500 p-10 rounded-4xl text-white hover:shadow-2xl transition-all shadow-xl">
+              <div class="text-5xl font-black mb-4">${closeRate}%</div>
+              <p class="text-xl">Close Rate</p>
+            </div>
+          </div>
+          
+          <div class="bg-white/10 backdrop-blur-xl rounded-4xl p-10 mb-12 border border-white/20">
+            <div class="flex flex-col lg:flex-row gap-6 items-center">
+              <div class="relative flex-1 max-w-2xl">
+                <svg class="absolute left-6 top-1/2 w-8 h-8 text-white/50 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input id="search" placeholder="🔍 Search by name, company, email, or source..." 
+                       value="${this.search}" 
+                       class="w-full pl-20 pr-6 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all">
+              </div>
+              <div class="flex gap-4">
+                <select id="sortSelect" class="bg-white/20 border border-white/30 rounded-4xl px-8 py-6 text-white text-xl focus:outline-none focus:ring-4 focus:ring-white/30">
+                  <option value="value" ${this.sortBy==='value'?'selected':''}>💰 Value</option>
+                  <option value="name" ${this.sortBy==='name'?'selected':''}>👤 Name</option>
+                  <option value="company" ${this.sortBy==='company'?'selected':''}>🏢 Company</option>
+                  <option value="source" ${this.sortBy==='source'?'selected':''}>🏷️ Source</option>
+                </select>
+                <button id="addBtn" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-12 py-6 rounded-4xl font-bold text-xl shadow-2xl hover:shadow-3xl transition-all">
+                  ➕ Add Lead
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-white/10 backdrop-blur-xl rounded-4xl overflow-hidden border border-white/20 shadow-2xl">
+            <div class="p-10 border-b border-white/20 bg-gradient-to-r from-white/5 to-emerald-500/5">
+              <h2 class="text-4xl font-black text-white">Recent Leads (${filtered.length})</h2>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-white">
+                <thead>
+                  <tr class="bg-white/5 backdrop-blur-sm">
+                    <th class="p-8 text-left font-black text-xl">Lead</th>
+                    <th class="p-8 text-left font-black text-xl">Company</th>
+                    <th class="p-8 text-left font-black text-xl">🏷️ Source</th>
+                    <th class="p-8 text-right font-black text-xl cursor-pointer hover:text-emerald-300" title="Click to sort">💰 Value</th>
+                    <th class="p-8 text-left font-black text-xl">Status</th>
+                    <th class="p-8 text-right font-black text-xl w-32">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filtered.map(l=>`
+                    <tr class="hover:bg-white/20 transition-all border-b border-white/10 group">
+                      <td class="p-8">
+                        <div class="flex items-center gap-6">
+                          <div class="w-20 h-20 bg-gradient-to-br from-slate-500 to-emerald-600 rounded-3xl flex items-center justify-center font-black text-2xl shadow-2xl group-hover:scale-110 transition-transform">
+                            ${l.name.split(' ')[0][0]}${l.name.split(' ').pop()?.[0] || ''}
+                          </div>
+                          <div>
+                            <div class="text-2xl font-black">${l.name}</div>
+                            <div class="text-lg opacity-70">${l.email}</div>
+                            <div class="text-sm opacity-50">${new Date(l.createdAt).toLocaleDateString()}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="p-8 font-bold text-xl">${l.company}</td>
+                      <td class="p-8">
+                        <span class="px-6 py-3 rounded-3xl font-bold text-lg bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-200 border border-purple-500/50">
+                          ${l.source}
+                        </span>
+                      </td>
+                      <td class="p-8 text-right">
+                        <div class="text-4xl font-black bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">
+                          $${(parseFloat(l.value) || 0).toLocaleString()}
+                        </div>
+                      </td>
+                      <td class="p-8">
+                        <span class="px-8 py-4 rounded-3xl font-black text-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-2xl hover:scale-105 transition-all cursor-pointer" onclick="ventrix.editStatus('${l.id}')">
+                          ${l.status}
+                        </span>
+                      </td>
+                      <td class="p-8 text-right">
+                        <button onclick="ventrix.showNotes('${l.id}')" class="text-yellow-400 hover:text-yellow-200 mr-2 text-2xl transition-all hover:scale-110" title="Notes">📝</button>
+                        <button onclick="ventrix.editLead('${l.id}')" class="text-emerald-400 hover:text-emerald-200 mr-4 text-xl transition-all hover:scale-110">✏️</button>
+                        <button onclick="ventrix.deleteLead('${l.id}')" class="text-red-400 hover:text-red-200 text-xl transition-all hover:scale-110">🗑️</button>
+                      </td>
+                    </tr>
+                  `).join('') || `
+                    <tr>
+                      <td colspan="6" class="p-32 text-center">
+                        <div class="text-8xl mb-8">🚀</div>
+                        <h3 class="text-4xl font-black text-white/50">No leads match your search</h3>
+                        <p class="text-xl text-white/30 mt-4">Try a different search or add new leads ✨</p>
+                      </td>
+                    </tr>
+                  `}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        
+        // Event bindings
+        const searchEl = document.getElementById('search');
+        if (searchEl) searchEl.oninput = e => {
+          this.search = e.target.value;
+          this.render();
+        };
+        
+        const sortEl = document.getElementById('sortSelect');
+        if (sortEl) sortEl.onchange = e => {
+          this.sortBy = e.target.value;
+          this.render();
+        };
+        
+        const addBtn = document.getElementById('addBtn');
+        if (addBtn) addBtn.onclick = () => this.showAddModal();
+      }
+
+      showNotes(id) {
+        const lead = this.leads.find(l => l.id == id);
+        if (!lead) return;
+        
+        document.getElementById('app').innerHTML += `
+          <div id="modalOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-8">
+            <div class="bg-white/10 backdrop-blur-xl rounded-4xl p-12 border border-white/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div class="flex justify-between items-center mb-8">
+                <h2 class="text-4xl font-black bg-gradient-to-r from-white to-emerald-300 bg-clip-text text-transparent">
+                  📝 Notes for ${lead.name}
+                </h2>
+                <button onclick="ventrix.closeModal()" class="text-3xl hover:text-white/70 transition-all">✕</button>
+              </div>
+              
+              <div id="notesList" class="space-y-4 mb-8 max-h-96 overflow-y-auto">
+                ${lead.notes && lead.notes.length > 0 ? lead.notes.map(note => `
+                  <div class="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-6 rounded-3xl border border-yellow-500/30 hover:bg-yellow-500/30 transition-all group">
+                    <div class="flex justify-between items-start mb-2">
+                      <div class="text-xl font-bold text-yellow-300">${note.text.substring(0, 50)}${note.text.length > 50 ? '...' : ''}</div>
+                      <button onclick="ventrix.deleteNote('${lead.id}', '${note.createdAt}')" class="text-red-400 hover:text-red-200 text-xl opacity-0 group-hover:opacity-100 transition-all">🗑️</button>
+                    </div>
+                    <div class="text-sm text-white/60">${new Date(note.createdAt).toLocaleString()}</div>
+                  </div>
+                `).join('') : `
+                  <div class="text-center py-16 text-white/50">
+                    <div class="text-6xl mb-4">📝</div>
+                    <p class="text-2xl font-bold">No notes yet</p>
+                    <p class="text-lg mt-2">Add your first note below 👇</p>
+                  </div>
+                `}
+              </div>
+              
+              <form id="addNoteForm" class="space-y-6">
+                <input type="hidden" name="leadId" value="${lead.id}">
+                <div>
+                  <label class="block text-white font-bold text-xl mb-4">Add Note</label>
+                  <textarea name="noteText" required rows="3" 
+                            class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-yellow-400/50 transition-all resize-vertical"
+                            placeholder="What did you discuss? Next steps? Follow-up needed?"></textarea>
+                </div>
+                
+                <div class="flex gap-4 pt-8 border-t border-white/20">
+                  <button type="submit" class="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-12 py-6 rounded-4xl font-black text-2xl shadow-2xl hover:shadow-3xl transition-all">
+                    ➕ Add Note
+                  </button>
+                  <button type="button" onclick="ventrix.closeModal()" class="px-12 py-6 bg-white/20 border border-white/30 text-white rounded-4xl font-bold text-xl hover:bg-white/30 transition-all">
+                    Close
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        `;
+        
+        document.getElementById('addNoteForm').onsubmit = (e) => this.handleAddNote(e);
+      }
+
+      handleAddNote(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const leadId = parseInt(formData.get('leadId'));
+        const noteText = formData.get('noteText').trim();
+        
+        const lead = this.leads.find(l => l.id === leadId);
+        if (lead && noteText) {
+          if (!lead.notes) lead.notes = [];
+          lead.notes.unshift({
+            text: noteText,
+            createdAt: new Date().toISOString()
+          });
+          this.save();
+          this.closeModal();
+          this.render();
+          
+          // Success feedback
+          const btn = e.target.querySelector('button[type="submit"]');
+          const originalText = btn.textContent;
+          btn.textContent = '✅ Note Added!';
+          btn.disabled = true;
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }, 2000);
+        }
+      }
+
+      deleteNote(leadId, noteTimestamp) {
+        if (confirm('🗑️ Delete this note?')) {
+          const lead = this.leads.find(l => l.id == leadId);
+          if (lead && lead.notes) {
+            lead.notes = lead.notes.filter(n => n.createdAt !== noteTimestamp);
+            this.save();
+            this.render();
+          }
+        }
+      }
+
+      showAddModal() {
+        document.getElementById('app').innerHTML += `
+          <div id="modalOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-8">
+            <div class="bg-white/10 backdrop-blur-xl rounded-4xl p-12 border border-white/20 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div class="flex justify-between items-center mb-8">
+                <h2 class="text-4xl font-black bg-gradient-to-r from-white to-emerald-300 bg-clip-text text-transparent">➕ Add New Lead</h2>
+                <button onclick="ventrix.closeModal()" class="text-3xl hover:text-white/70 transition-all">✕</button>
+              </div>
+              
+              <form id="addLeadForm" class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <label class="block text-white font-bold text-xl mb-4">Name</label>
+                    <input type="text" name="name" required class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all" placeholder="John Doe">
+                  </div>
+                  <div>
+                    <label class="block text-white font-bold text-xl mb-4">Email</label>
+                    <input type="email" name="email" required class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all" placeholder="john@company.com">
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <label class="block text-white font-bold text-xl mb-4">Company</label>
+                    <input type="text" name="company" required class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all" placeholder="Acme Corporation">
+                  </div>
+                  <div>
+                    <label class="block text-white font-bold text-xl mb-4">Value ($)</label>
+                    <input type="number" name="value" required class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all" placeholder="25000">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-white font-bold text-xl mb-4">Source</label>
+                  <select name="source" class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl focus:outline-none focus:ring-4 focus:ring-white/30">
+                    <option value="Website">🌐 Website</option>
+                    <option value="Referral">👥 Referral</option>
+                    <option value="Cold Email">📧 Cold Email</option>
+                    <option value="Event">🎉 Event</option>
+                    <option value="LinkedIn">💼 LinkedIn</option>
+                    <option value="Other">📋 Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-white font-bold text-xl mb-4">Status</label>
+                  <select name="status" class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl focus:outline-none focus:ring-4 focus:ring-white/30">
+                    <option value="New">New</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Qualified">Qualified</option>
+                    <option value="Proposal">Proposal</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+                
+                <div class="flex gap-4 pt-8 border-t border-white/20">
+                  <button type="submit" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-12 py-6 rounded-4xl font-black text-2xl shadow-2xl hover:shadow-3xl transition-all">
+                    ✅ Save Lead
+                  </button>
+                  <button type="button" onclick="ventrix.closeModal()" class="px-12 py-6 bg-white/20 border border-white/30 text-white rounded-4xl font-bold text-xl hover:bg-white/30 transition-all">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        `;
+        
+        document.getElementById('addLeadForm').onsubmit = (e) => this.handleAddLead(e);
+      }
+
+      closeModal() {
+        const overlay = document.getElementById('modalOverlay');
+        if (overlay) overlay.remove();
+      }
+
+      handleAddLead(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const newLead = {
+          id: Date.now(),
+          name: formData.get('name'),
+          email: formData.get('email'),
+          company: formData.get('company'),
+          value: parseFloat(formData.get('value')),
+          source: formData.get('source'),
+          status: formData.get('status'),
+          notes: [],
+          createdAt: new Date().toISOString()
+        };
+        
+        this.leads.unshift(newLead);
+        this.save();
+        this.closeModal();
+        this.render();
+      }
+
+      editLead(id) {
+        const lead = this.leads.find(l => l.id == id);
+        if (!lead) return;
+        
+        document.getElementById('app').innerHTML += `
+          <div id="modalOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-8">
+            <div class="bg-white/10 backdrop-blur-xl rounded-4xl p-12 border border-white/20 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div class="flex justify-between items-center mb-8">
+                <h2 class="text-4xl font-black bg-gradient-to-r from-white to-emerald-300 bg-clip-text text-transparent">✏️ Edit Lead</h2>
+                <button onclick="ventrix.closeModal()" class="text-3xl hover:text-white/70 transition-all">✕</button>
+              </div>
+              
+              <form id="editLeadForm" class="space-y-8">
+                <input type="hidden" name="id" value="${lead.id}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <label class="block text-white font-bold text-xl mb-4">Name</label>
+                    <input type="text" name="name" value="${lead.name}" required class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl focus:outline-none focus:ring-4 focus:ring-white/30 transition-all">
+                  </div>
+                  <div>
+                                        <label class="block text-white font-bold text-xl mb-4">Email</label>
+                    <input type="email" name="email" value="${lead.email}" required class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl focus:outline-none focus:ring-4 focus:ring-white/30 transition-all">
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <label class="block text-white font-bold text-xl mb-4">Company</label>
+                    <input type="text" name="company" value="${lead.company}" required class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl focus:outline-none focus:ring-4 focus:ring-white/30 transition-all">
+                  </div>
+                  <div>
+                    <label class="block text-white font-bold text-xl mb-4">Value ($)</label>
+                    <input type="number" name="value" value="${lead.value}" required class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl focus:outline-none focus:ring-4 focus:ring-white/30 transition-all">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-white font-bold text-xl mb-4">Source</label>
+                  <select name="source" class="w-full px-8 py-6 bg-white/20 border border-white/30 rounded-4xl text-white text-xl focus:outline-none focus:ring-4 focus:ring-white/30">
+                    <option value="Website" ${lead.source==='Website'?'selected':''}>🌐 Website</option>
+                    <option value="Referral" ${lead.source==='Referral'?'selected':''}>👥 Referral</option>
+                    <option value="Cold Email" ${lead.source==='Cold Email'?'selected':''}>📧 Cold Email</option>
+                    <option value="Event" ${lead.source==='Event'?'selected':''}>🎉 Event</option>
+                    <option value="LinkedIn" ${lead.source==='LinkedIn'?'selected':''}>💼 LinkedIn</option>
+                    <option value="Other" ${lead.source==='Other'?'selected':''}>📋 Other</option>
+                  </select>
+                </div>
+                
+                <div class="flex gap-4 pt-8 border-t border-white/20">
+                  <button type="submit" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-12 py-6 rounded-4xl font-black text-2xl shadow-2xl hover:shadow-3xl transition-all">
+                    💾 Update Lead
+                  </button>
+                  <button type="button" onclick="ventrix.closeModal()" class="px-12 py-6 bg-white/20 border border-white/30 text-white rounded-4xl font-bold text-xl hover:bg-white/30 transition-all">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        `;
+        
+        document.getElementById('editLeadForm').onsubmit = (e) => this.handleEditLead(e);
+      }
+
+      handleEditLead(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const id = parseInt(formData.get('id'));
+        const leadIndex = this.leads.findIndex(l => l.id === id);
+        
+        if (leadIndex !== -1) {
+          this.leads[leadIndex] = {
+            ...this.leads[leadIndex],
+            name: formData.get('name'),
+            email: formData.get('email'),
+            company: formData.get('company'),
+            value: parseFloat(formData.get('value')),
+            source: formData.get('source'),
+          };
+          this.save();
+          this.closeModal();
+          this.render();
+        }
+      }
+
+      editStatus(id) {
+        const statuses = ['New', 'Contacted', 'Qualified', 'Proposal', 'Closed'];
+        const lead = this.leads.find(l => l.id == id);
+        if (!lead) return;
+        
+        const currentIndex = statuses.indexOf(lead.status);
+        const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+        
+        lead.status = nextStatus;
+        this.save();
+        this.render();
+      }
+
+      deleteLead(id) {
+        if (confirm('🗑️ Delete this lead? This action cannot be undone.')) {
+          this.leads = this.leads.filter(l => l.id != id);
+          this.save();
+          this.render();
+        }
+      }
+    }
+
+    // Global logout function
+    function logout() {
+      localStorage.removeItem('ventrix-logged-in');
+      location.reload();
+    }
+
+    // Initialize dashboard
+    const ventrix = new VentrixDashboard();
+  </script>
+</body>
+</html>
