@@ -68,7 +68,7 @@ Responsive: Mobile-first Tailwind Grid Performance: Single 200KB HTML file (zero
 - **Notes, status changes, new leads** persist across sessions
 - **Clear storage**: Ctrl+Shift+R (hard refresh)
 
-  ## 📈 Production Metrics
+## 📈 Production Metrics
 **Leads Managed**: Unlimited Storage: ~50KB (30 leads + notes) 
 Load Time: <100ms 
 Mobile Score: 100/100 
