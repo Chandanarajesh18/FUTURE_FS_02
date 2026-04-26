@@ -26,7 +26,10 @@ A production-ready, single-file CRM dashboard with enterprise-grade features, be
 - 🎯 **Production Polish** - Hover effects, keyboard navigation, error handling
 
 ### **Key Metrics Dashboard**
-📊 Total Leads: 30+ 💰 Pipeline Value: $5.2M+ 📈 Close Rate: 17% 📝 Leads with Notes: 18
+📊**Total Leads** : 30+
+💰 **Pipeline Value**: $5.2M+ 
+📈 **Close Rate**: 17% 
+📝 **Leads with Notes**: 18
 
 ## 🎮 Live Demo Experience
 1. **Login**: `admin@ventrix.com` / `password`
@@ -38,10 +41,10 @@ A production-ready, single-file CRM dashboard with enterprise-grade features, be
 7. **Edit/Delete**: ✏️ 🗑️ for full CRUD
 
 ## 🛠️ Tech Stack
- Frontend: Vanilla JavaScript + Tailwind CSS (CDN) 
-Storage: LocalStorage (production-ready persistence) 
-Design: Glassmorphism + Gradient Animations 
-Responsive: Mobile-first Tailwind Grid Performance: Single 200KB HTML file (zero build)
+**Frontend**: Vanilla JavaScript + Tailwind CSS (CDN) 
+**Storage**: LocalStorage (production-ready persistence) 
+**Design**: Glassmorphism + Gradient Animations 
+**Responsive**: Mobile-first Tailwind Grid Performance: Single 200KB HTML file (zero build)
 
 ## 🎯 Real-World Use Cases
 
@@ -70,9 +73,9 @@ Responsive: Mobile-first Tailwind Grid Performance: Single 200KB HTML file (zero
 
 ## 📈 Production Metrics
 **Leads Managed**: Unlimited Storage: ~50KB (30 leads + notes) 
-Load Time: <100ms 
-Mobile Score: 100/100 
-Bundle Size: 200KB (single file)
+**Load Time**: <100ms 
+**Mobile Score**: 100/100 
+**Bundle Size**: 200KB (single file)
 
 ## 🎨 Design System
 - **Primary**: Emerald/Teal gradients (#10B981 → #0D9488)
